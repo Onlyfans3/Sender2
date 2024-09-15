@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Form Data Display</title>
+    <script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
+    <style>
+        /* General Page Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0f7fa, #f0f4c3);
+        }
+
+        #displayArea {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+            width: 80%;
+            max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin-top: 0;
+        }
+
+        #dataDisplay {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .messageBlock {
+            background-color: #fafafa;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .messageBlock:hover {
+            transform: translateY(-5px);
+        }
+
+        p {
+            margin: 5px 0;
+            font-size: 1em;
+            color: #555;
+        }
+
+        p strong {
+            color: #2c3e50;
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+            margin: 10px 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            #displayArea {
+                padding: 20px;
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="displayArea">
+        <h1>Received Card List</h1>
+        <div id="dataDisplay"></div>
+    </div>
+
+    <script>
+        // Initialize Ably client
+        const ably = new Ably.Realtime('eXsM9Q.P9Cadg:czuSocYApa29JpDHttEBFL6V8xi486Wg7svkiRHBRXs');
+        const channel = ably.channels.get('form-data');
+
+        // Function to display the data as a list of received messages
+        function displayData(dataList) {
+            const displayArea = document.getElementById('dataDisplay');
+            displayArea.innerHTML = ''; // Clear current data
+
+            // Iterate over the list of messages and display each one
+            dataList.forEach((data, index) => {
+                const messageBlock = `
+                    <div class="messageBlock">
+                        <h2>Message ${index + 1}</h2>
+                        <p><strong>Name:</strong> ${data.userName}</p>
+                        <p><strong>Field 1:</strong> ${data.field1}</p>
+                        <p><strong>Field 2:</strong> ${data.field2}</p>
+                        <p><strong>Field 3:</strong> ${data.field3}</p>
+                        <p><strong>Field 4:</strong> ${data.field4}</p>
+                        <p><strong>Field 5:</strong> ${data.field5}</p>
+                        <p><strong>Field 6:</strong> ${data.field6}</p>
+                        <p><strong>Field 7:</strong> ${data.field7}</p>
+                        
+                    </div>`;
+                displayArea.innerHTML += messageBlock; // Append the message
+            });
+        }
+
+        // Retrieve message history and display it
+        function loadHistory() {
+            channel.history(function(err, resultPage) {
+                if (err) {
+                    console.error('Error retrieving history:', err);
+                    return;
+                }
+                // Extract the data from the message history
+                const dataList = resultPage.items.map(item => item.data);
+                displayData(dataList);
+            });
+        }
+
+        // Subscribe to receive new messages and display them as they arrive
+        channel.subscribe('formDataSent', function(message) {
+            loadHistory();  // Reload the history every time a new message arrives
+        });
+
+        // On page load, retrieve and display message history
+        window.onload = function() {
+            loadHistory();
+        };
+    </script>
+</body>
+</html>
